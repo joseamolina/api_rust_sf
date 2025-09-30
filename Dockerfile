@@ -1,4 +1,5 @@
-FROM rust:1.88.0 AS builder
+#FROM amd64/rust:1.88 AS builder
+FROM rust:1.88 AS builder
 
 WORKDIR /usr/src/app
 
@@ -10,8 +11,9 @@ RUN rm -rf src
 COPY . .
 RUN cargo build --release
 
-# Etapa 2: runtime
 FROM debian:bookworm-slim
+#FROM amd64/debian:bookworm-slim
+
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y \

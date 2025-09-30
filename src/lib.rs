@@ -10,7 +10,35 @@ pub struct AppState {
     pub client: Client,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize)]
+pub struct Params {
+    function: String,
+    symbol: String,
+    interval: String,
+    apikey: String,
+    datatype: String,
+}
+
+impl Params {
+    pub fn to_hashmap(&self) -> HashMap<String, String> {
+        let mut map = HashMap::new();
+        map.insert("function".to_string(), self.function.clone());
+        map.insert("symbol".to_string(), self.symbol.to_string());
+        map.insert("interval".to_string(), self.interval.to_string());
+        map.insert("apikey".to_string(), self.apikey.to_string());
+        map.insert("datatype".to_string(), self.datatype.to_string());
+        map
+    }
+}
+
+impl fmt::Display for Params {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // Aquí defines cómo quieres que se vea al imprimirlo
+        write!(f, "function: {}, symbol: {}, interval: {}, datatype: {}.", self.function, self.symbol, self.interval, self.datatype)
+    }
+}
+
+#[derive(Serialize)]
 pub struct ValueIntraday {
     pub value: Value,
 }

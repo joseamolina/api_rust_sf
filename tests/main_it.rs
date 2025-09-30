@@ -4,6 +4,7 @@ use std::{collections::HashMap};
 use serde_json::Value;
 use std::fs;
 
+// This method retrieves a key from a dict as a json file
 fn get_property_api_key() -> String {
     let content_api = fs::read_to_string("config.json").expect("File could not be read");
     let config: HashMap<String, String> = serde_json::from_str(&content_api).unwrap();

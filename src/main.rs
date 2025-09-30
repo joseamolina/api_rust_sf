@@ -1,42 +1,34 @@
-use axum::extract::Query;
-use axum::{Json, Router, extract::State, response::IntoResponse, routing::get};
-use reqwest::Client;
-use std::{collections::HashMap, net::SocketAddr};
-use serde_json::Value;
+use actix_web::{get, web, App, HttpServer, Responder};
 
-#[tokio::main]
-async fn main() {
-    let state = api_rust_sf::AppState {
-        client: Client::new(),
-    };
-
-    let app = Router::new()
-        .route("/get_value_intraday", get(get_value_intraday))
-        .with_state(state);
-
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
-
-    println!("listening on {}", addr);
-    axum::serve(tokio::net::TcpListener::bind(addr).await.unwrap(), app)
-        .await
-        .unwrap();
+async fn ext_api_call(url: &str) -> Result<String, reqwest::Error> {
+    let resp = reqwest::get(url).await?;
+    let body = resp.text().await?;
+    Ok(body)
 }
 
-async fn get_value_intraday(
-    State(state): State<api_rust_sf::AppState>,
-    Query(params): Query<HashMap<String, String>>,
-) -> impl IntoResponse {
+#[get("/get_value_intraday")]
+async fn get_value_intraday(params: web::Query<api_rust_sf::Params>) -> impl Responder {
     let base_url = "https://alphavantage.co/query";
-    let url = api_rust_sf::build_url_with_params(base_url, params);
 
-    match state.client.get(url).send().await {
-        Ok(resp) => {
-            let text = resp.text().await.unwrap_or_default();
-            let value_json: Value = serde_json::from_str(&text).unwrap();
-            Json(api_rust_sf::ValueIntraday { value: value_json })
-        }
-        Err(_) => {
-            Json(api_rust_sf::ValueIntraday { value: Value::Null })
-        }
-    }
+    let url = api_rust_sf::build_url_with_params(base_url, params.into_inner().to_hashmap());
+    let response = ext_api_call(&url).await.unwrap();
+
+    // Calcula la suma
+    let resultado = api_rust_sf::ValueIntraday {
+        value: response.parse().unwrap()
+    };
+
+    web::Json(resultado)
+}
+
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+
+    HttpServer::new(|| {
+        App::new()
+            .service(get_value_intraday)
+    })
+        .bind(("0.0.0.0", 8085))?
+        .run()
+        .await
 }
