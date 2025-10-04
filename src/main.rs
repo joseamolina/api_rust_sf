@@ -10,6 +10,7 @@ async fn ext_api_call(url: &str) -> Result<String, reqwest::Error> {
 async fn get_value_intraday(params: web::Query<api_rust_sf::Params>) -> impl Responder {
     let base_url = "https://alphavantage.co/query";
 
+    println!("Petición");
     let url = api_rust_sf::build_url_with_params(base_url, params.into_inner().to_hashmap());
     let response = ext_api_call(&url).await.unwrap();
 
@@ -24,6 +25,7 @@ async fn get_value_intraday(params: web::Query<api_rust_sf::Params>) -> impl Res
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
 
+    println!("Starting server...");
     HttpServer::new(|| {
         App::new()
             .service(get_value_intraday)
